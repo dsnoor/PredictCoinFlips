@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Predict Coin Flips</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Predict Coin Flips">
+  <meta name="author" content="Noor Ahmed">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="../../libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="../../libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="../../libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="../../libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="../../libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="../../libraries/frameworks/io2012/js/slides" 
+    src="../../libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Predict Coin Flips</h1>
+    <h2></h2>
+    <p>Noor Ahmed<br/>Data products assignment</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Flip a Coin!</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Just imagine a friend asks you to bet on the outcome of some coin flips. And you prefered to bet on a series of coin flips at once.  Each time the coin is heads, you receive the payout and if the coin is tails your friend receives the payout. </p>
+
+<p><img class = center src=./assets/img/coin_flip_s.jpg height=300 Width=300> </p>
+
+<p>Now, Let us explore the probabilities of wins and losses with a fair coin and also the payouts between you and your friend!</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h2>Prediction Approach</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>To predict the results, I have used four input variables as listed below:</p>
+
+<h4>Input values/variables:</h4>
+
+<ol>
+<li>Payout($) for you on every win </li>
+<li>Payout($) for your friend on every win</li>
+<li>Number of repeats per trail</li>
+<li>Number of trails</li>
+<li>Is the Coin Fair? or Biased?</li>
+</ol>
+
+<h4>Libraries used:</h4>
+
+<ol>
+<li>library(shiny)</li>
+<li>library(ggplot2)</li>
+<li>library(eeptools)</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Processing:</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">source(&quot;../server.R&quot;)
+</code></pre>
+
+<pre><code>## Warning in file(filename, &quot;r&quot;, encoding = encoding): cannot open file
+## &#39;../server.R&#39;: No such file or directory
+</code></pre>
+
+<pre><code>## Error in file(filename, &quot;r&quot;, encoding = encoding): cannot open the connection
+</code></pre>
+
+<pre><code class="r">source(&quot;../ui.R&quot;)
+</code></pre>
+
+<pre><code>## Warning in file(filename, &quot;r&quot;, encoding = encoding): cannot open file
+## &#39;../ui.R&#39;: No such file or directory
+</code></pre>
+
+<pre><code>## Error in file(filename, &quot;r&quot;, encoding = encoding): cannot open the connection
+</code></pre>
+
+<h4>ui.R code snippet [for slider inputs using shiny]</h4>
+
+<pre><code class="r"># Slider input to set expected Payout value for You on every win
+sliderInput(&quot;value&quot;,&quot;Payout($) to Me for every win&quot;, value=5, min=5, max=50),
+# Slider input to set expected Payout value for Your friend
+sliderInput(&quot;bet&quot;,&quot;Payout($) to my Friend for every win&quot;, value=5, min=5, max=50),
+# Slider to provide the input for number of simulations/repeats
+sliderInput(&quot;reps&quot;,&quot;Number of repeats per trial:&quot;, 
+            value= 50, min=5, max=100, step=5, animate=TRUE),
+# Slider to provide the input for number of trials 
+sliderInput(&quot;obs&quot;,&quot;Number of trials:&quot;, 
+            value=50, min=50, max=200, step=10, animate=TRUE),
+# Slider to provide the input for Fairness of the coin with step increment
+sliderInput(&quot;coin&quot;,&quot;Fairness of the coin:&quot;, 
+            value=0.0, min=-.50, max=.50, step=0.05, animate=TRUE),
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>Processing:</h2>
+  </hgroup>
+  <article data-timings="">
+    <h4>server.R code snippet  [for prediction logic using shiny server]</h4>
+
+<pre><code class="r">shinyServer(function(input,output) {
+    trialInput &lt;- reactive(function() { bias &lt;- input$coin
+        sims   &lt;- input$obs
+        reps   &lt;- input$reps
+        trials &lt;- rbinom(reps,sims,0.5+bias)  })
+    # Expressions to generate the net wins plot.
+    output$netwinsplot &lt;- reactivePlot(function(){ trials &lt;- trialInput()
+     df2&lt;- data.frame(wins=trials, you=trials*input$value, friend=(input$obs-trials)*input$bet)
+        df2$net &lt;- df2$you - df2$friend
+        p  &lt;- qplot(net,data=df2) + theme_dpi()
+        print(p)  })
+    # Expressions to generate the payoff plot.
+    output$payoffsplot &lt;- reactivePlot(function(){ trials &lt;- trialInput()
+        df  &lt;- data.frame(actor=rep(c(&quot;Me&quot;,&quot;MyFriend&quot;), each=input$reps),
+                payout=c(trials*input$value,(input$obs-trials)*input$bet))
+        p &lt;- qplot(payout,data=df, geom=&#39;bar&#39;) + facet_wrap(~actor) + coord_flip() + 
+            scale_x_continuous(label=dollar)
+        print(p) }) })
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>Prediction Results:</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src=./assets/img/coin_flip_shinyapp.png height=500 width=800 ></p>
+
+<p>Shiny application can be accessed at <a href="https://dsnoor.shinyapps.io/PredictCoinFlips/">https://dsnoor.shinyapps.io/PredictCoinFlips/</a></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Flip a Coin!'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Prediction Approach'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Processing:'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Processing:'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Prediction Results:'>
+         5
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="../../libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
